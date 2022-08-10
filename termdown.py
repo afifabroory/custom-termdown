@@ -16,6 +16,8 @@ from time import sleep
 import unicodedata
 
 import click
+import json
+import requests
 from dateutil import tz
 from dateutil.parser import parse
 from pyfiglet import CharNotPrinted, Figlet
@@ -577,6 +579,7 @@ def stopwatch(
         sync_start = datetime.now()
         pause_start = None
         seconds_elapsed = 0
+        laps_elapsed = 1
         laps = []
         while quit_after is None or seconds_elapsed < int(quit_after):
             figlet.width = stdscr.getmaxyx()[1]
@@ -672,9 +675,18 @@ def stopwatch(
                     if pause_start:
                         sync_start += (datetime.now() - pause_start)
                         pause_start = None
-                    laps.append((datetime.now() - sync_start).total_seconds())
-                    sync_start = datetime.now()
-                    seconds_elapsed = 0
+                    laps_duration = (datetime.now() - sync_start).total_seconds()
+                    laps.append(laps_duration)
+                    # 
+                    HOST = "https://codechef-challenge-default-rtdb.asia-southeast1.firebasedatabase.app"
+                    PATH = "/codechef-easython/" + str(laps_elapsed)
+                    SECRET = "tMhSc8tn4KfvEEakkKdgMeurEBicQp1J3EuLG0Xi"
+                    requests.put(HOST + PATH + ".json?auth=" + SECRET, data=str(laps_duration))
+                    laps_elapsed += 1
+
+                    # Don't reset laps
+                    # sync_start = datetime.now()
+                    # seconds_elapsed = 0
             if time:
                 seconds_elapsed = ceil((datetime.now() - sync_start).total_seconds())
             else:
